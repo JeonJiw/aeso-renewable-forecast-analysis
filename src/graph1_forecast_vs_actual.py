@@ -125,6 +125,11 @@ merged = pd.merge_asof(
     tolerance=pd.Timedelta("30min"),
 )
 
+os.makedirs("data", exist_ok=True)
+merged.to_csv("data/merged_aug2025.csv", index=False)
+print("[OK] saved merged dataset -> data/merged_aug2025.csv")
+
+
 # ------------------------------
 # Plot (single axis; Solar=reds, Wind=blues)
 # ------------------------------
