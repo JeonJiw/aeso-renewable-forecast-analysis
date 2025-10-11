@@ -46,6 +46,8 @@ The analysis aimed to evaluate:
   Red (Solar) and Blue (Wind) series confirm that wind predictions are closer to actual outputs.
 - **Graph 2 — Total Supply & 24h Rolling Std:**  
   The orange volatility curve peaks align with dips in forecast performance.
+- **Graph 3 — Stability Comparison:**  
+  Highlights differences in supply stability between solar and wind, supporting operational monitoring.
 
 ---
 
@@ -53,8 +55,8 @@ The analysis aimed to evaluate:
 
 1. **Wind energy** demonstrates higher predictability and lower volatility than solar.
 2. **Solar forecast models** are more sensitive to transient atmospheric changes.
-3. **System-level volatility** affects forecast reliability; when rolling Std rises, accuracy declines.
-4. Integrating **meteorological and historical volatility features** could improve forecast precision.
+3. Stability comparison reveals important operational differences between solar and wind generation.
+4. Enhanced monitoring of system-level volatility can improve forecast reliability and support decision-making.
 
 ---
 
@@ -63,24 +65,25 @@ The analysis aimed to evaluate:
 - Enhance short-term forecasting models using localized weather data (irradiance, wind speed).
 - Introduce ensemble methods combining statistical and machine-learning models.
 - Expand rolling-window volatility tracking for operational alerting and risk management.
-- Develop dashboards combining forecast accuracy, coverage, and volatility trends.
+- Develop dashboards combining forecast accuracy, coverage, and volatility trends for continuous monitoring.
 
 ---
 
 ## 5. Deliverables Summary
 
-| Output          | Description                     | Path                                          |
-| --------------- | ------------------------------- | --------------------------------------------- |
-| Graph 1         | Forecast vs Actual (Solar/Wind) | `figures/graph1_forecast_vs_actual.png`       |
-| Graph 2         | Total Supply & Rolling Std      | `figures/graph2_total_supply_variability.png` |
-| Combined Figure | Assignment 2 Final Figure       | `figures/assignment2_final.png`               |
-| Metrics CSV     | Daily MAE/MAPE/Coverage         | `analysis/metrics_aug2025.csv`                |
-| This Report     | Analysis Findings               | `docs/final_analysis_report.md`               |
+| Output      | Description                        | Path                                                                        |
+| ----------- | ---------------------------------- | --------------------------------------------------------------------------- |
+| Graph 1     | Forecast vs Actual (Solar/Wind)    | `figures/graph1_forecast_vs_actual.png`                                     |
+| Graph 2     | Total Supply & Rolling Std         | `figures/graph2_total_supply_variability.png`                               |
+| Graph 3     | Stability Comparison               | `figures/stability_comparison.png`                                          |
+| Metrics CSV | Hourly and Daily MAE/MAPE/Coverage | `analysis/metrics_hourly_aug2025.csv`, `analysis/metrics_daily_aug2025.csv` |
+| This Report | Analysis Findings                  | `docs/final_analysis_report.md`                                             |
 
 ---
 
 **Conclusion:**
 
 > Wind forecast accuracy exceeded solar in August 2025.  
+> Stability comparison underscores the importance of operational monitoring for managing supply variability.  
 > Forecast errors increased during high variability periods, emphasizing the need for volatility-aware prediction models.  
-> Overall, Alberta’s renewable generation forecasting exhibited good performance with scope for refinement in solar forecasting.
+> Overall, Alberta’s renewable generation forecasting exhibited good performance with opportunities to enhance solar forecasting and system stability monitoring.
