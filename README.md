@@ -15,7 +15,7 @@ Two subplots: (1) Solar/Wind Forecast vs Actual, (2) Total Supply & Rolling Std.
 
 - `docs/` – One-page design summary
 - `src/` – Python scripts (`aeso_analysis.py`)
-- `notebooks/` – (optional) Jupyter version
+- `notebooks/` – Jupyter version
 - `figures/` – Generated plots
 - `data/` – CSV files (may be git-ignored; see `data/README.md`)
 
@@ -23,10 +23,43 @@ Two subplots: (1) Solar/Wind Forecast vs Actual, (2) Total Supply & Rolling Std.
 
 - Alberta Electric System Operator (AESO): https://www.aeso.ca/market/market-and-system-reporting/data-requests
 
-## How to Run
+## 🧰 Setup Instructions (Recommended: Virtual Environment)
 
-\`\`\`bash
+### 1️⃣ Create and Activate Virtual Environment
+
+```bash
+cd ~/Projects/aeso-renewable-forecast-analysis
+python3 -m venv venv
+source venv/bin/activate   # macOS/Linux
+
+```
+
+### 2️⃣ Install Dependencies
+
+```bash
+pip install --upgrade pip
 pip install pandas matplotlib
+```
+
+### ▶️ How to Run
+
+```bash
+# From the project root
 python src/aeso_analysis.py
-\`\`\`
-Outputs: `figures/assignment2_aeso_plots.png`
+# Or, if using the first visualization script:
+python src/graph1_forecast_vs_actual.py
+
+```
+
+Output:
+Generated figures will be saved to:
+
+```bash
+figures/assignment2_aeso_plots.png
+```
+
+### 🧾 Notes
+
+    •	Ensure that CSV files (Solar_Data_2025.csv, Wind_Data_2025.csv, CSD Generation (Hourly) - 2025-08.csv) are placed in the data/ directory.
+    •	The scripts automatically merge and align time-series data using pandas.merge_asof() based on timestamps.
+    •	Forecast accuracy is computed using mean absolute percentage error (MAPE) and mean absolute error (MAE).
