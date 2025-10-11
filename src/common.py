@@ -45,7 +45,7 @@ def add_DT(df):
 
     df = df.dropna(subset=["DT"]).sort_values("DT")
     return df
-    
+
 def standardize_energy(df, prefix):
     out = df.copy()
     ren = {}
@@ -67,3 +67,32 @@ def keep_august_2025(df):
 def print_daily_counts(tag, df):
     per_day = df["DT"].dt.floor("D").value_counts().sort_index()
     print(f"[{tag}] rows={len(df)}  unique_days={per_day.size}")
+
+
+# --- Plot show/hide control ---
+import argparse, os
+
+def parse_show_flag(default_show=True):
+    """
+    Handle whether to display matplotlib window or not.
+    - default_show: True when running standalone
+    - If RUN_PIPELINE=1 → default_show=False (for batch runs)
+    - CLI flags override:
+        --show     → always show
+        --no-show  → always hide
+    """
+    p = argparse.ArgumentParser(add_help=False)
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--show",    action="store_true")
+    g.add_argument("--no-show", action="store_true")
+    args, _ = p.parse_known_args()
+
+    # hide by default in pipeline mode
+    if os.environ.get("RUN_PIPELINE") == "1":
+        default_show = False
+
+    if args.show:
+        return True
+    if args.no_show:
+        return False
+    return default_show

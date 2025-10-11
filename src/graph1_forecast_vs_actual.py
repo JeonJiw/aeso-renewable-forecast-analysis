@@ -11,9 +11,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from zoneinfo import ZoneInfo  # Python 3.9+
-
-# ✅ 공통 함수 불러오기
-from common import add_DT, keep_august_2025, standardize_energy
+from common import add_DT, keep_august_2025, standardize_energy, parse_show_flag
 
 DATA_DIR = "data"
 SOLAR_CSV = os.path.join(DATA_DIR, "Solar_Data_2025_Aug.csv")
@@ -57,6 +55,13 @@ merged = pd.merge_asof(
 )
 
 # ------------------------------
+# Save merged dataset for later analysis
+# ------------------------------
+MERGED_CSV = os.path.join(DATA_DIR, "merged_aug2025.csv")
+merged.to_csv(MERGED_CSV, index=False)
+print(f"[OK] Saved merged dataset → {MERGED_CSV}")
+
+# ------------------------------
 # Plot (Solar=reds, Wind=blues)
 # ------------------------------
 SOLAR_FC, SOLAR_AC, SOLAR_FILL = "#d62728", "#ff7f7f", "#f28e8c"
@@ -88,4 +93,9 @@ plt.tight_layout()
 plt.savefig(OUT_PNG, dpi=300, bbox_inches="tight")
 plt.show()
 
+SHOW = parse_show_flag(default_show=True)  # standalone run = show by default
+
+plt.savefig(OUT_PNG, dpi=300, bbox_inches="tight")
+if SHOW:
+    plt.show()
 print(f"[OK] Saved → {OUT_PNG}")

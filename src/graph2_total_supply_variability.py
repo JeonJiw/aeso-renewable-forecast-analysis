@@ -6,7 +6,7 @@ Graph 2: Total Supply and 24-hour Rolling Variability — August 2025
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from common import add_DT, keep_august_2025
+from common import add_DT, keep_august_2025, parse_show_flag
 
 DATA_FILE = "data/CSD Generation (Hourly) - 2025-08.csv"
 OUT_PNG = "figures/graph2_total_supply_variability.png"
@@ -59,4 +59,9 @@ plt.tight_layout()
 plt.savefig(OUT_PNG, dpi=300)
 plt.show()
 
-print(f"[OK] Graph saved → {OUT_PNG}")
+SHOW = parse_show_flag(default_show=True)  # standalone run = show by default
+
+plt.savefig(OUT_PNG, dpi=300, bbox_inches="tight")
+if SHOW:
+    plt.show()
+print(f"[OK] Saved → {OUT_PNG}")
