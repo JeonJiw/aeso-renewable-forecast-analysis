@@ -6,6 +6,7 @@ Graph 2: Total Supply and 24-hour Rolling Variability — August 2025
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from common import add_DT, keep_august_2025
 
 DATA_FILE = "data/CSD Generation (Hourly) - 2025-08.csv"
 OUT_PNG = "figures/graph2_total_supply_variability.png"
@@ -15,10 +16,11 @@ df = pd.read_csv(DATA_FILE)
 df.columns = df.columns.str.strip()
 
 # Convert time column
-df["DT"] = pd.to_datetime(df["Date (MST)"], errors="coerce")
+df = add_DT(df)
 
 # Filter August 2025
-df = df[(df["DT"].dt.year == 2025) & (df["DT"].dt.month == 8)]
+df = keep_august_2025(df)
+
 
 # === Compute total supply (sum of all assets per hour) ===
 supply = df.groupby("DT", as_index=False)["Volume"].sum()
