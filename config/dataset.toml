@@ -1,0 +1,11 @@
+[[pre_steps]]
+module = "src.producers.make_august"
+func   = "run"
+inputs  = ["data/Solar_Data_2025.csv", "data/Wind_Data_2025.csv"]
+outputs = ["data/Solar_Data_2025_Aug.csv",
+           "data/Wind_Data_2025_Aug.csv",
+           "data/merged_aug2025.csv"]
+
+[[datasets]]
+adapter = "aeso"
+path    = "data/merged_aug2025.csv"
