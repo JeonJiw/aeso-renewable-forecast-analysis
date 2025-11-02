@@ -96,3 +96,13 @@ def parse_show_flag(default_show=True):
     if args.no_show:
         return False
     return default_show
+
+def ensure_dirs(path):
+    """
+    Ensure the directory for the given path exists.
+    Accepts either a file path (creates parent) or a directory path.
+    """
+    import os
+    dirpath = path if os.path.splitext(path)[1] == "" else os.path.dirname(path)
+    if dirpath and not os.path.exists(dirpath):
+        os.makedirs(dirpath, exist_ok=True)

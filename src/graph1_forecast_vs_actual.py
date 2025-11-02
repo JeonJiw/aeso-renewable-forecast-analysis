@@ -10,13 +10,13 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from common import add_DT, keep_august_2025, standardize_energy, parse_show_flag
+from common import add_DT, keep_august_2025, standardize_energy, parse_show_flag, ensure_dirs
 
 DATA_DIR = "data"
 SOLAR_CSV = os.path.join(DATA_DIR, "Solar_Data_2025_Aug.csv")
 WIND_CSV  = os.path.join(DATA_DIR, "Wind_Data_2025_Aug.csv")
 OUT_PNG   = os.path.join("figures", "forecast_vs_actual_aug2025.png")
-os.makedirs("figures", exist_ok=True)
+ensure_dirs(OUT_PNG) # ensure output directory exists
 
 # ------------------------------
 # Load & Preprocess
