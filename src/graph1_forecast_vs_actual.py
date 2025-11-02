@@ -10,7 +10,6 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from zoneinfo import ZoneInfo  # Python 3.9+
 from common import add_DT, keep_august_2025, standardize_energy, parse_show_flag
 
 DATA_DIR = "data"
