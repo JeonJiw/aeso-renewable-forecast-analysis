@@ -18,6 +18,7 @@ WIND_CSV  = os.path.join(DATA_DIR, "Wind_Data_2025_Aug.csv")
 OUT_PNG   = os.path.join("figures", "forecast_vs_actual_aug2025.png")
 ensure_dirs(OUT_PNG) # ensure output directory exists
 
+SHOW = parse_show_flag(default_show=False)
 # ------------------------------
 # Load & Preprocess
 # ------------------------------
@@ -57,6 +58,7 @@ merged = pd.merge_asof(
 # Save merged dataset for later analysis
 # ------------------------------
 MERGED_CSV = os.path.join(DATA_DIR, "merged_aug2025.csv")
+ensure_dirs(MERGED_CSV)
 merged.to_csv(MERGED_CSV, index=False)
 print(f"[OK] Saved merged dataset → {MERGED_CSV}")
 
@@ -90,11 +92,8 @@ plt.legend(loc="upper right")
 plt.grid(alpha=0.3)
 plt.tight_layout()
 plt.savefig(OUT_PNG, dpi=300, bbox_inches="tight")
-plt.show()
-
-SHOW = parse_show_flag(default_show=True)  # standalone run = show by default
-
-plt.savefig(OUT_PNG, dpi=300, bbox_inches="tight")
 if SHOW:
     plt.show()
+else:
+    plt.close()
 print(f"[OK] Saved → {OUT_PNG}")
