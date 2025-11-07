@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Common utilities for AESO data processing.
+"""
+
 import pandas as pd
 from zoneinfo import ZoneInfo
 
@@ -62,7 +67,12 @@ def standardize_energy(df, prefix):
     return out
 
 def keep_august_2025(df):
+    """Legacy: filter to August 2025 only."""
     return df[(df["DT"].dt.year == 2025) & (df["DT"].dt.month == 8)]
+
+def keep_month(df, year: int, month: int):
+    """Filter to a specific year/month."""
+    return df[(df["DT"].dt.year == year) & (df["DT"].dt.month == month)]
 
 def print_daily_counts(tag, df):
     per_day = df["DT"].dt.floor("D").value_counts().sort_index()

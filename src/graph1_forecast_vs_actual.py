@@ -1,21 +1,40 @@
 # -*- coding: utf-8 -*-
 """
-Plot Solar & Wind Forecast vs Actual — August 2025
-- Uses common utilities: add_DT(), keep_august_2025(), standardize_energy()
+Plot Solar & Wind Forecast vs Actual for a given year/month
+- Uses common utilities: add_DT(), keep_month(), standardize_energy()
 - Keeps original time columns (dt / FORECAST_DATE_LOCAL / FORECAST_DATE_GMT)
 - Color scheme: Solar=red family, Wind=blue family; ranges filled.
+
+Usage:
+  python src/graph1_forecast_vs_actual.py [--year 2025] [--month 8] [--show|--no-show]
 """
 
 import os
+import argparse
+import calendar
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from common import add_DT, keep_august_2025, standardize_energy, parse_show_flag, ensure_dirs
+from common import add_DT, keep_month, standardize_energy, parse_show_flag, ensure_dirs
+
+# Parse year/month from args or env
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument("--year", type=int, default=int(os.environ.get("YEAR", 2025)))
+parser.add_argument("--month", type=int, default=int(os.environ.get("MONTH", 8)))
+args, _ = parser.parse_known_args()
+YEAR: int = args.year
+MONTH: int = args.month
+if not (1 <= MONTH <= 12):
+    raise SystemExit(f"Invalid month: {MONTH}. Use 1..12")
+MM = f"{MONTH:02d}"
+MONTH_NAME = calendar.month_name[MONTH]
 
 DATA_DIR = "data"
-SOLAR_CSV = os.path.join(DATA_DIR, "Solar_Data_2025_Aug.csv")
-WIND_CSV  = os.path.join(DATA_DIR, "Wind_Data_2025_Aug.csv")
-OUT_PNG   = os.path.join("figures", "forecast_vs_actual_aug2025.png")
+SOLAR_CSV = os.path.join(DATA_DIR, f"Solar_Data_{YEAR}_{MM}.csv")
+WIND_CSV  = os.path.join(DATA_DIR, f"Wind_Data_{YEAR}_{MM}.csv")
+OUT_PNG   = os.path.join("figures", f"forecast_vs_actual_{YEAR}-{MM}.png")
+MERGED_CSV = os.path.join(DATA_DIR, f"merged_{YEAR}-{MM}.csv")
+
 ensure_dirs(OUT_PNG) # ensure output directory exists
 
 SHOW = parse_show_flag(default_show=False)
@@ -33,9 +52,9 @@ wind.columns  = wind.columns.str.strip()
 solar = add_DT(solar)
 wind  = add_DT(wind)
 
-# Filter to August 2025 only
-solar = keep_august_2025(solar)
-wind  = keep_august_2025(wind)
+# Filter to target year/month
+solar = keep_month(solar, YEAR, MONTH)
+wind  = keep_month(wind, YEAR, MONTH)
 
 # Standardize column names (OPT→FORECAST, ACTUAL→ACTUAL, MIN/MAX)
 solar_std = standardize_energy(solar, "SOLAR")
@@ -57,7 +76,6 @@ merged = pd.merge_asof(
 # ------------------------------
 # Save merged dataset for later analysis
 # ------------------------------
-MERGED_CSV = os.path.join(DATA_DIR, "merged_aug2025.csv")
 ensure_dirs(MERGED_CSV)
 merged.to_csv(MERGED_CSV, index=False)
 print(f"[OK] Saved merged dataset → {MERGED_CSV}")
@@ -69,7 +87,7 @@ SOLAR_FC, SOLAR_AC, SOLAR_FILL = "#d62728", "#ff7f7f", "#f28e8c"
 WIND_FC,  WIND_AC,  WIND_FILL  = "#1f77b4", "#6baed6", "#9ecae1"
 
 plt.figure(figsize=(12, 6))
-plt.title("Forecast vs Actual — August 2025 (Solar=Red, Wind=Blue)")
+plt.title(f"Forecast vs Actual — {MONTH_NAME} {YEAR} (Solar=Red, Wind=Blue)")
 plt.xlabel("Time"); plt.ylabel("MW")
 
 # Wind

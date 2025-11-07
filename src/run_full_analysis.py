@@ -9,18 +9,42 @@ Behavior:
   unless you pass --no-show (your script's own flag).
 
 Usage:
-  python src/run_full_analysis.py
+  python src/run_full_analysis.py [YEAR] [MONTH]
+  python src/run_full_analysis.py [--year 2025] [--month 8]
 """
 
 import subprocess
 import os
 import sys
+import argparse
+import calendar
 
 # ------------------------------
 # Setup
 # ------------------------------
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 os.chdir(ROOT_DIR)
+
+# Parse year/month (support both positional args and flags)
+parser = argparse.ArgumentParser(description="Run full AESO renewable forecast analysis pipeline")
+parser.add_argument("year_pos", nargs="?", type=int, default=None, metavar="YEAR", help="Target year (positional argument)")
+parser.add_argument("month_pos", nargs="?", type=int, default=None, metavar="MONTH", help="Target month 1-12 (positional argument)")
+parser.add_argument("--year", dest="year_flag", type=int, default=None, help="Target year (alternative to positional, overrides positional)")
+parser.add_argument("--month", dest="month_flag", type=int, default=None, help="Target month 1-12 (alternative to positional, overrides positional)")
+
+args = parser.parse_args()
+# Priority: flags > positional > env > default
+YEAR = args.year_flag if args.year_flag is not None else (args.year_pos if args.year_pos is not None else int(os.environ.get("YEAR", 2025)))
+MONTH = args.month_flag if args.month_flag is not None else (args.month_pos if args.month_pos is not None else int(os.environ.get("MONTH", 8)))
+if not (1 <= MONTH <= 12):
+    print(f"❌ Invalid month: {MONTH}. Use 1..12")
+    sys.exit(1)
+MM = f"{MONTH:02d}"
+MONTH_NAME = calendar.month_name[MONTH]
+
+print(f"\n{'='*70}")
+print(f"Running analysis for {MONTH_NAME} {YEAR}")
+print(f"{'='*70}\n")
 
 def run_step(description: str, command: str, env=None):
     """Run a shell command and display status with formatted output."""
@@ -44,10 +68,14 @@ def run_step(description: str, command: str, env=None):
 PIPE_ENV = dict(os.environ)
 PIPE_ENV["RUN_PIPELINE"] = "1"
 PIPE_ENV["MPLBACKEND"] = "Agg"  # force no-GUI
+PIPE_ENV["YEAR"] = str(YEAR)
+PIPE_ENV["MONTH"] = str(MONTH)
 
 # FINAL_ENV → still pipeline mode, but ALLOW GUI for the very last plot
 FINAL_ENV = dict(os.environ)
 FINAL_ENV["RUN_PIPELINE"] = "1"
+FINAL_ENV["YEAR"] = str(YEAR)
+FINAL_ENV["MONTH"] = str(MONTH)
 # ensure no forced headless backend for the final step
 if "MPLBACKEND" in FINAL_ENV:
     del FINAL_ENV["MPLBACKEND"]
@@ -56,29 +84,29 @@ if "MPLBACKEND" in FINAL_ENV:
 # Sequential Steps
 # ------------------------------
 steps = [
-    # 1) Build CSV files (Solar_Data_2025_Aug.csv, Wind_Data_2025_Aug.csv)
-    ("Extract August 2025 Data",
-     "python src/extract_august_data.py",
+    # 1) Build CSV files (Solar_Data_{YEAR}_{MM}.csv, Wind_Data_{YEAR}_{MM}.csv)
+    (f"Extract {MONTH_NAME} {YEAR} Data",
+     f"python -m src.extract_month_data --year {YEAR} --month {MONTH}",
      PIPE_ENV),
 
     # 2) Graph 1: Forecast vs Actual (Merged CSV Saved) — No show
     ("Graph 1 — Forecast vs Actual (no show)",
-     "python src/graph1_forecast_vs_actual.py --no-show",
+     f"python src/graph1_forecast_vs_actual.py --year {YEAR} --month {MONTH} --no-show",
      PIPE_ENV),
 
     # 3) Graph 2: Total Supply & Rolling Variability — No show
     ("Graph 2 — Total Supply & Rolling Variability (no show)",
-     "python src/graph2_total_supply_variability.py --no-show",
+     f"python src/graph2_total_supply_variability.py --year {YEAR} --month {MONTH} --no-show",
      PIPE_ENV),
 
     # 4) Metrics Generation (hourly/daily CSV + Console Summary) — No plot
     ("Build Metrics (hourly & daily CSV)",
-     "python src/analysis_metrics_aug2025.py",
+     f"python -m src.analysis_metrics --year {YEAR} --month {MONTH}",
      PIPE_ENV),
 
     # 5) Final Dashboard (Stability vs System Variability) — Show
     ("Final Dashboard — Stability vs System Variability (SHOW)",
-     "python src/plot_stability_comparison.py --show",
+     f"python src/plot_stability_comparison.py --year {YEAR} --month {MONTH} --show",
      FINAL_ENV),
 ]
 
@@ -89,17 +117,17 @@ for desc, cmd, env in steps:
 # Summary
 # ------------------------------
 print("\n🎉 All analysis steps completed successfully!\n")
-print("Generated data:")
-print("  • data/Solar_Data_2025_Aug.csv")
-print("  • data/Wind_Data_2025_Aug.csv")
-print("  • data/merged_aug2025.csv")
-print("  • analysis/metrics_aug2025_hourly.csv")
-print("  • analysis/metrics_aug2025_daily.csv")
+print(f"Generated data for {MONTH_NAME} {YEAR}:")
+print(f"  • data/Solar_Data_{YEAR}_{MM}.csv")
+print(f"  • data/Wind_Data_{YEAR}_{MM}.csv")
+print(f"  • data/merged_{YEAR}-{MM}.csv")
+print(f"  • analysis/metrics_{YEAR}-{MM}_hourly.csv")
+print(f"  • analysis/metrics_{YEAR}-{MM}_daily.csv")
 
-print("\nGenerated figures:")
-print("  • figures/forecast_vs_actual_aug2025.png            (hidden during pipeline)")
-print("  • figures/graph2_total_supply_variability.png       (hidden during pipeline)")
-print("  • figures/stability_comparison.png                  (SHOWN at the end)")
-print("  • figures/stability_comparison_daily.png            (also saved)")
+print(f"\nGenerated figures for {MONTH_NAME} {YEAR}:")
+print(f"  • figures/forecast_vs_actual_{YEAR}-{MM}.png            (hidden during pipeline)")
+print(f"  • figures/graph2_total_supply_variability_{YEAR}-{MM}.png       (hidden during pipeline)")
+print(f"  • figures/stability_comparison_{YEAR}-{MM}.png                  (SHOWN at the end)")
+print(f"  • figures/stability_comparison_daily_{YEAR}-{MM}.png            (also saved)")
 
 print("\n✅ Pipeline complete. Close the final figure window when finished.")

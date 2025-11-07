@@ -2,33 +2,46 @@
 """
 Make 'Stability Comparison' charts from metrics CSVs (no raw/merged reads).
 
-Inputs (from analysis_metrics_aug2025.py):
-  - analysis/metrics_aug2025_hourly.csv   (required)
-  - analysis/metrics_aug2025_daily.csv    (optional)
+Inputs (from analysis_metrics.py):
+  - analysis/metrics_{YEAR}-{MM}_hourly.csv   (required)
+  - analysis/metrics_{YEAR}-{MM}_daily.csv   (optional)
 
 Outputs:
-  - figures/stability_comparison.png
-  - figures/stability_comparison_daily.png  (if daily CSV exists)
+  - figures/stability_comparison_{YEAR}-{MM}.png
+  - figures/stability_comparison_daily_{YEAR}-{MM}.png  (if daily CSV exists)
 
 Run:
   source venv/bin/activate
-  python src/plot_stability_comparison.py [--show|--no-show]
+  python src/plot_stability_comparison.py [--year 2025] [--month 8] [--show|--no-show]
 """
 
 import os
 import argparse
+import calendar
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+# Parse year/month from args or env
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument("--year", type=int, default=int(os.environ.get("YEAR", 2025)))
+parser.add_argument("--month", type=int, default=int(os.environ.get("MONTH", 8)))
+args, _ = parser.parse_known_args()
+YEAR: int = args.year
+MONTH: int = args.month
+if not (1 <= MONTH <= 12):
+    raise SystemExit(f"Invalid month: {MONTH}. Use 1..12")
+MM = f"{MONTH:02d}"
+MONTH_NAME = calendar.month_name[MONTH]
 
 AN_DIR = "analysis"
 FIG_DIR = "figures"
 os.makedirs(FIG_DIR, exist_ok=True)
 
-HOURLY_CSV = os.path.join(AN_DIR, "metrics_aug2025_hourly.csv")
-DAILY_CSV  = os.path.join(AN_DIR, "metrics_aug2025_daily.csv")
-OUT_HOURLY = os.path.join(FIG_DIR, "stability_comparison.png")
-OUT_DAILY  = os.path.join(FIG_DIR, "stability_comparison_daily.png")
+HOURLY_CSV = os.path.join(AN_DIR, f"metrics_{YEAR}-{MM}_hourly.csv")
+DAILY_CSV  = os.path.join(AN_DIR, f"metrics_{YEAR}-{MM}_daily.csv")
+OUT_HOURLY = os.path.join(FIG_DIR, f"stability_comparison_{YEAR}-{MM}.png")
+OUT_DAILY  = os.path.join(FIG_DIR, f"stability_comparison_daily_{YEAR}-{MM}.png")
 
 def parse_show_flag(default_show=True):
     p = argparse.ArgumentParser(add_help=False)
@@ -49,10 +62,11 @@ def load_hourly(path: str) -> pd.DataFrame:
     df = df.sort_values("DT").reset_index(drop=True)
     return df
 
-def stability_comparison_from_hourly(df: pd.DataFrame, out_png: str, show: bool):
+def stability_comparison_from_hourly(df: pd.DataFrame, out_png: str, show: bool, year: int, month: int):
     SOLAR = "#d62728"
     WIND  = "#1f77b4"
     VOL   = "orange"
+    MONTH_NAME = calendar.month_name[month]
 
     need_cols = ["DT", "ROLLING_STD_24H", "SOLAR_AE", "WIND_AE"]
     missing = [c for c in need_cols if c not in df.columns]
@@ -60,7 +74,7 @@ def stability_comparison_from_hourly(df: pd.DataFrame, out_png: str, show: bool)
         raise KeyError(f"Hourly metrics missing columns: {missing}")
 
     fig, axes = plt.subplots(3, 1, figsize=(14, 9), sharex=True)
-    fig.suptitle("Forecast Stability vs System Variability — August 2025 (from hourly metrics)")
+    fig.suptitle(f"Forecast Stability vs System Variability — {MONTH_NAME} {year} (from hourly metrics)")
 
     # 1) System Variability
     axes[0].plot(df["DT"], df["ROLLING_STD_24H"], color=VOL, linewidth=1.8, label="System Variability (24H Rolling Std)")
@@ -104,7 +118,7 @@ def stability_comparison_from_hourly(df: pd.DataFrame, out_png: str, show: bool)
     plt.close(fig)
     print(f"[OK] saved → {out_png}")
 
-def daily_trend_optional(path: str, out_png: str, show: bool):
+def daily_trend_optional(path: str, out_png: str, show: bool, year: int, month: int):
     if not os.path.isfile(path):
         return
     d = pd.read_csv(path, parse_dates=["date"])
@@ -122,8 +136,9 @@ def daily_trend_optional(path: str, out_png: str, show: bool):
     if not ycols:
         return
 
+    MONTH_NAME = calendar.month_name[month]
     fig, ax1 = plt.subplots(figsize=(12, 6))
-    ax1.set_title("Daily Accuracy vs System Variability — August 2025")
+    ax1.set_title(f"Daily Accuracy vs System Variability — {MONTH_NAME} {year}")
     ax1.set_xlabel("Date")
 
     handles, labels = [], []
@@ -156,5 +171,5 @@ def daily_trend_optional(path: str, out_png: str, show: bool):
 if __name__ == "__main__":
     SHOW = parse_show_flag(default_show=True)
     hourly = load_hourly(HOURLY_CSV)
-    stability_comparison_from_hourly(hourly, OUT_HOURLY, SHOW)
-    daily_trend_optional(DAILY_CSV, OUT_DAILY, SHOW)
+    stability_comparison_from_hourly(hourly, OUT_HOURLY, SHOW, YEAR, MONTH)
+    daily_trend_optional(DAILY_CSV, OUT_DAILY, SHOW, YEAR, MONTH)
