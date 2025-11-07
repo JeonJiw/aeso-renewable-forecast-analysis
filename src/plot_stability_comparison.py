@@ -125,43 +125,56 @@ def daily_trend_optional(path: str, out_png: str, show: bool, year: int, month: 
     d = d.sort_values("date").reset_index(drop=True)
 
     cols = d.columns
-    have = {
-        "SOLAR_MAE": "Solar MAE (MW)",
-        "WIND_MAE": "Wind MAE (MW)",
-        "SOLAR_MAPE%": "Solar MAPE (%)",
-        "WIND_MAPE%": "Wind MAPE (%)",
-        "RollingStd24h": "Rolling Std (MW)",
-    }
-    ycols = [k for k in have if k in cols]
-    if not ycols:
+    need_cols = ["date", "RollingStd24h", "SOLAR_MAE", "WIND_MAE"]
+    missing = [c for c in need_cols if c not in cols]
+    if missing:
+        print(f"[WARN] Daily CSV missing columns: {missing}. Skipping daily plot.")
         return
 
+    SOLAR = "#d62728"
+    WIND  = "#1f77b4"
+    VOL   = "orange"
     MONTH_NAME = calendar.month_name[month]
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-    ax1.set_title(f"Daily Accuracy vs System Variability — {MONTH_NAME} {year}")
-    ax1.set_xlabel("Date")
 
-    handles, labels = [], []
-    if "SOLAR_MAE" in cols:
-        h1, = ax1.plot(d["date"], d["SOLAR_MAE"], color="#d62728", linewidth=1.8, label="Solar MAE (MW)")
-        handles.append(h1); labels.append("Solar MAE (MW)")
-    if "WIND_MAE" in cols:
-        h2, = ax1.plot(d["date"], d["WIND_MAE"], color="#1f77b4", linewidth=1.8, label="Wind MAE (MW)")
-        handles.append(h2); labels.append("Wind MAE (MW)")
-    ax1.set_ylabel("MAE (MW)")
-    ax1.grid(alpha=0.3)
+    fig, axes = plt.subplots(3, 1, figsize=(14, 9), sharex=True)
+    fig.suptitle(f"Forecast Stability vs System Variability — {MONTH_NAME} {year} (from daily metrics)")
 
-    if "RollingStd24h" in cols:
-        ax2 = ax1.twinx()
-        h3, = ax2.plot(d["date"], d["RollingStd24h"], color="orange", linewidth=1.6, label="Rolling Std (MW)")
-        ax2.set_ylabel("Rolling Std (MW)", color="orange")
-        ax2.tick_params(axis="y", labelcolor="orange")
-        handles.append(h3); labels.append("Rolling Std (MW)")
+    # 1) System Variability
+    axes[0].plot(d["date"], d["RollingStd24h"], color=VOL, linewidth=1.8, label="System Variability (Rolling Std)")
+    axes[0].set_ylabel("Variability (MW)")
+    axes[0].grid(alpha=0.3)
+    axes[0].legend(loc="upper right")
 
-    if handles:
-        ax1.legend(handles=handles, labels=labels, loc="upper right")
+    # 2) Solar Forecast Error (MAE)
+    axes[1].plot(d["date"], d["SOLAR_MAE"], color=SOLAR, linewidth=1.6, label="Solar Forecast Error (MAE)")
+    axes[1].set_ylabel("Solar MAE (MW)")
+    axes[1].grid(alpha=0.3)
+    axes[1].legend(loc="upper right")
 
-    fig.tight_layout()
+    # 3) Wind Forecast Error (MAE)
+    axes[2].plot(d["date"], d["WIND_MAE"], color=WIND, linewidth=1.6, label="Wind Forecast Error (MAE)")
+    axes[2].set_ylabel("Wind MAE (MW)")
+    axes[2].set_xlabel("Date")
+    axes[2].grid(alpha=0.3)
+    axes[2].legend(loc="upper right")
+
+    # Optional highlight: top 15% volatility windows
+    if d["RollingStd24h"].notna().any():
+        thr = np.nanpercentile(d["RollingStd24h"].values, 85)
+        high = d["RollingStd24h"] >= thr
+        in_block = False
+        start = None
+        for i in range(len(d)):
+            if high.iloc[i] and not in_block:
+                in_block = True
+                start = d["date"].iloc[i]
+            if (not high.iloc[i] and in_block) or (in_block and i == len(d)-1):
+                end = d["date"].iloc[i]
+                for ax in axes:
+                    ax.axvspan(start, end, color="gray", alpha=0.10)
+                in_block = False
+
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
     fig.savefig(out_png, dpi=300, bbox_inches="tight")
     if show:
         plt.show()
